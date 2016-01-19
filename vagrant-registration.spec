@@ -5,22 +5,16 @@
 %global vagrant_plugin_name vagrant-registration
 
 Name: %{?scl_prefix}%{vagrant_plugin_name}
-Version: 0.0.19
-Release: 5%{?dist}
+Version: 1.1.0
+Release: 1%{?dist}
 Summary: Automatic guest registration for Vagrant
 Group: Development/Languages
 License: GPLv2
-URL: https://rubygems.org/gems/vagrant-registration 
+URL: https://github.com/projectatomic/adb-vagrant-registration
 Source0: https://rubygems.org/gems/%{vagrant_plugin_name}-%{version}.gem
-Requires(pre): shadow-utils
 Requires(posttrans): %{?scl_prefix}vagrant
 Requires(preun): %{?scl_prefix}vagrant
-Requires: %{?scl_prefix_ruby}ruby(release)
-Requires: %{?scl_prefix_ruby}ruby(rubygems) >= 1.3.6
 Requires: %{?scl_prefix}vagrant
-BuildRequires: %{?scl_prefix_ruby}ruby(release)
-BuildRequires: %{?scl_prefix_ruby}rubygems-devel >= 1.3.6
-BuildRequires: %{?scl_prefix_ruby}ruby
 BuildRequires: %{?scl_prefix}vagrant
 BuildArch: noarch
 Provides: %{?scl_prefix}vagrant(%{vagrant_plugin_name}) = %{version}
@@ -56,6 +50,9 @@ gem build %{vagrant_plugin_name}.gemspec
 %vagrant_plugin_install
 %{?scl:EOF}
 
+chmod 644 .%{vagrant_plugin_instdir}/resources/rhn_unregister.py
+sed -i 's/^#!\/usr\/bin\/python$//' .%{vagrant_plugin_instdir}/resources/rhn_unregister.py
+
 %install
 mkdir -p %{buildroot}%{vagrant_plugin_dir}
 cp -a .%{vagrant_plugin_dir}/* \
@@ -82,8 +79,11 @@ getent group vagrant >/dev/null || groupadd -r vagrant
 %{?scl:EOF}
 
 %files
+%dir %{vagrant_plugin_instdir}
 %license %{vagrant_plugin_instdir}/LICENSE.md
-%{vagrant_plugin_instdir}/plugins/*
+%{vagrant_plugin_instdir}/plugins
+%{vagrant_plugin_instdir}/resources
+%exclude %{vagrant_plugin_instdir}/.*
 %{vagrant_plugin_libdir}
 %exclude %{vagrant_plugin_cache}
 %{vagrant_plugin_spec}
@@ -95,9 +95,18 @@ getent group vagrant >/dev/null || groupadd -r vagrant
 %{vagrant_plugin_instdir}/Rakefile
 %{vagrant_plugin_instdir}/Gemfile
 %{vagrant_plugin_instdir}/vagrant-registration.gemspec
-%{vagrant_plugin_instdir}/tests
 
 %changelog
+* Thu Dec 17 2015 Pavel Valena <pvalena@redhat.com> - 1.1.0-1
+- Remove shebang from python script and set it non-executable
+- Exclude hidden files from instdir
+- Remove unnecessary Requires(pre): shadow-utils
+- Fix macro in changelog
+- Drop unnecessary BuildRequires
+- Change URL from rubygems.org to github.com
+- Include missing %%dir macro
+- Update to 1.1.0
+
 * Tue Sep 08 2015 Josef Stribny <jstribny@redhat.com> - 0.0.19-5
 - Fix %posttrans and %preun scripts
 
@@ -136,7 +145,7 @@ getent group vagrant >/dev/null || groupadd -r vagrant
 - Split description to two lines
 
 * Wed Feb 18 2015 Tomas Hrcka <thrcka@redhat.com> - 0.0.8-2
-- Move README and CHANGELOG to %doc subpackage
+- Move README and CHANGELOG to %%doc subpackage
 - Re-word description
 - Add upstream URL
 - Require vagrant at build time
