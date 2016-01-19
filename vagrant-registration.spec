@@ -6,7 +6,7 @@
 
 Name: %{?scl_prefix}%{vagrant_plugin_name}
 Version: 1.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Automatic guest registration for Vagrant
 Group: Development/Languages
 License: GPLv2
@@ -69,12 +69,12 @@ popd
 getent group vagrant >/dev/null || groupadd -r vagrant
 
 %posttrans
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl:env -i - scl enable %{scl} - << \EOF}
 %vagrant_plugin_register %{vagrant_plugin_name}
 %{?scl:EOF}
 
 %preun
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl:env -i - scl enable %{scl} - << \EOF}
 %vagrant_plugin_unregister %{vagrant_plugin_name}
 %{?scl:EOF}
 
@@ -97,6 +97,10 @@ getent group vagrant >/dev/null || groupadd -r vagrant
 %{vagrant_plugin_instdir}/vagrant-registration.gemspec
 
 %changelog
+* Tue Jan 05 2016 Pavel Valena <pvalena@redhat.com> - 1.1.0-2
+- Clear environment for scriptlets
+- Resolves: rhbz#1250143
+
 * Thu Dec 17 2015 Pavel Valena <pvalena@redhat.com> - 1.1.0-1
 - Remove shebang from python script and set it non-executable
 - Exclude hidden files from instdir
